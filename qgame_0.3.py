@@ -134,37 +134,6 @@ def main():
                     if button_rect.collidepoint(event.pos):
                         self.selected_option = option
 
-    def custom_settings_menu():
-        slider1 = Slider('Number of turns',min_value=10, max_value=30, step=2, x=WIDTH//2 - WIDTH//4, y=100, width=WIDTH//2, height=30)
-        slider2 = Slider('Cell freezing time (turns)',min_value=0, max_value=8, step=1, x=WIDTH//2 - WIDTH//4, y=300, width=WIDTH//2, height=30)
-        category_selector = Selector(x=WIDTH//2 - WIDTH//4, y=500, width=WIDTH//2, height=50, options=["X Starts", "O Starts"])
-        
-        while True:
-            WIN.fill(WHITE)
-            slider1.draw(WIN)
-            slider2.draw(WIN)
-            category_selector.draw(WIN)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                slider1.handle_event(event)
-                slider2.handle_event(event)
-                category_selector.handle_event(event)
-                
-            # Mostrar botón de confirmación
-            mouse_pos = pygame.mouse.get_pos()
-            click = pygame.mouse.get_pressed()
-            
-            confirm_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT - 100, 150, 50)
-            pygame.draw.rect(WIN, DARK_GRAY, confirm_button)
-            draw_text("Confirm", SMALLFONT, WHITE, WIN, confirm_button.centerx, confirm_button.centery)
-            
-            if confirm_button.collidepoint(mouse_pos) and click[0]:
-                rules = {'xstart':category_selector.selected_option == 'X' ,'max_turns': slider1.value,'last_moves': slider2.value}
-                return rules   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
-            
-            pygame.display.update()
 
 
     def render_latex_to_image(expression,colors, fontsize=15, dpi=100):
@@ -339,8 +308,8 @@ def main():
             Button("Custom Rules", WIDTH // 2 - 150, HEIGHT // 2 + 20, 300, 50, GRAY, DARK_GRAY, action="custom"),
             Button("Quit", WIDTH // 2 - 150, HEIGHT // 2 + 90, 300, 50, GRAY, DARK_GRAY, action="quit")
         ]
-
-        while True:
+        exit = False
+        while True and not exit:
             WIN.fill(WHITE)
             draw_text('Quantum Tic-Tac-Toe', FONT, BLACK, WIN, WIDTH // 2, HEIGHT // 4)
 
@@ -353,12 +322,14 @@ def main():
                     if action == "quit":
                         pygame.quit()
                         sys.exit()
+
                     else:
                         if action == 'standard':
-                            rules = {'xstart':True,'max_turns':14,'last_moves':1}
-                            return rules
+                            rules,exit = stardard_settings_menu()
+
                         if action == 'custom':
-                            rules = custom_settings_menu()
+                            rules,exit = custom_settings_menu()
+
             
             pygame.display.update()
 
@@ -366,6 +337,91 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+        return rules
+
+    def custom_settings_menu():
+        slider1 = Slider('Number of turns',min_value=10, max_value=30, step=2, x=WIDTH//2 - WIDTH//4, y=100, width=WIDTH//2, height=30)
+        slider2 = Slider('Cell freezing time (turns)',min_value=0, max_value=8, step=1, x=WIDTH//2 - WIDTH//4, y=100+130, width=WIDTH//2, height=30)
+        category_selector = Selector(x=WIDTH//2 - WIDTH//4, y=100+130+130, width=WIDTH//2, height=50, options=["X Starts", "O Starts"])
+        
+        while True:
+            WIN.fill(WHITE)
+            slider1.draw(WIN)
+            slider2.draw(WIN)
+            category_selector.draw(WIN)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                slider1.handle_event(event)
+                slider2.handle_event(event)
+                category_selector.handle_event(event)
+                
+            # Mostrar botón de confirmación
+            mouse_pos = pygame.mouse.get_pos()
+            click = pygame.mouse.get_pressed()
+            
+            play_button = pygame.Rect(WIDTH // 2 - 75+90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, play_button)
+            draw_text("Play", SMALLFONT, WHITE, WIN, play_button.centerx, play_button.centery)
+            
+            back_button = pygame.Rect(WIDTH // 2 - 75 -90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, back_button)
+            draw_text("Back", SMALLFONT, WHITE, WIN, back_button.centerx, back_button.centery)
+
+            if play_button.collidepoint(mouse_pos) and click[0]:
+                rules = {'xstart':category_selector.selected_option == 'X' ,'max_turns': slider1.value,'last_moves': slider2.value}
+                WIN.fill(WHITE)
+                return rules,True   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+            if back_button.collidepoint(mouse_pos) and click[0]:
+                rules = None
+                WIN.fill(WHITE)
+                return rules,False   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+
+            pygame.display.update()
+
+    def stardard_settings_menu():
+        while True:
+            WIN.fill(WHITE)
+            draw_text("Standard rules:", FONT, BLACK, WIN, WIDTH // 2, HEIGHT // 4)
+            draw_text("Game lasts for 14 turns", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+50)
+            draw_text("Cells freeze for 1 turn after being played", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+100)
+            draw_text("X starts!", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+150)
+            
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+            # Mostrar botón de confirmación
+            mouse_pos = pygame.mouse.get_pos()
+            click = pygame.mouse.get_pressed()
+            
+            play_button = pygame.Rect(WIDTH // 2 - 75+90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, play_button)
+            draw_text("Play", SMALLFONT, WHITE, WIN, play_button.centerx, play_button.centery)
+            
+            back_button = pygame.Rect(WIDTH // 2 - 75 -90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, back_button)
+            draw_text("Back", SMALLFONT, WHITE, WIN, back_button.centerx, back_button.centery)
+
+            if play_button.collidepoint(mouse_pos) and click[0]:
+                rules = {'xstart':True ,'max_turns': 14,'last_moves': 1}
+                WIN.fill(WHITE)
+                return rules,True   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+            if back_button.collidepoint(mouse_pos) and click[0]:
+                rules = None
+                WIN.fill(WHITE)
+                return rules,False   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+
+            pygame.display.update()
+
+
     def game(rules):
         xstart=rules['xstart']
         max_turns=rules['max_turns']
