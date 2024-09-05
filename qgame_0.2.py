@@ -190,7 +190,7 @@ def draw_state(grid):
 def main():
     run = True
     clock = pygame.time.Clock()
-
+    
     # Inicialización de Grid y Turno
     state00 = State(0, 0)
     state01 = State(0, 1)
