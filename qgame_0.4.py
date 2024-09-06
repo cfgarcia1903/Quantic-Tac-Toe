@@ -32,7 +32,7 @@ def main():
 
     # Fuentes
     FONT = pygame.font.SysFont("comicsans", 40)
-    SMALLFONT = pygame.font.SysFont("comicsans", 30)
+    SMALLFONT = pygame.font.SysFont("comicsans", 25)
 
     clock = pygame.time.Clock()
 
@@ -134,8 +134,6 @@ def main():
                     if button_rect.collidepoint(event.pos):
                         self.selected_option = option
 
-
-
     def render_latex_to_image(expression,colors, fontsize=15, dpi=100):
         fig, ax = plt.subplots(figsize=(1, 1), dpi=dpi)
         x_index=0
@@ -161,11 +159,15 @@ def main():
     def draw_turn(turn,progress):
         turn_text = f"Turn: {turn.player}"
         text_1 =   SMALLFONT.render(turn_text, 1, BLACK)
-        WIN.blit(text_1, (WIDTH // 2 - text_1.get_width() // 2-150, 5))
+        WIN.blit(text_1, (WIDTH // 2 - text_1.get_width() // 2-150, 10))
 
-        progress_text = f"Progress: {progress[0]}/{progress[1]}"
+        if progress == '>:3':
+            progress_text = progress
+        else:
+            progress_text = f"Progress: {progress[0]}/{progress[1]}"
+
         text_2 = SMALLFONT.render(progress_text, 1, BLACK)
-        WIN.blit(text_2, (WIDTH // 2 - text_2.get_width() // 2+150, 5))
+        WIN.blit(text_2, (WIDTH // 2 - text_2.get_width() // 2+150, 10))
         
     def draw_winner(winner):
         winner_text = f"{winner}"
@@ -304,13 +306,19 @@ def main():
         if Owins>Xwins:
             return 'O won!'
 
+    def grid_full(moves_log):
+        grid_set=set(((0,0),(0,1),(0,2),(1,0),(1,1),(1,2),(2,0),(2,1),(2,2)))
+        log_set=set(moves_log)
+        return log_set == grid_set
+
 
     # Screens:
     def config():
         buttons = [
             Button("Standard Rules", WIDTH // 2 - 150, HEIGHT // 2 - 50, 300, 50, GRAY, DARK_GRAY, action="standard"),
             Button("Custom Rules", WIDTH // 2 - 150, HEIGHT // 2 + 20, 300, 50, GRAY, DARK_GRAY, action="custom"),
-            Button("Quit", WIDTH // 2 - 150, HEIGHT // 2 + 90, 300, 50, GRAY, DARK_GRAY, action="quit")
+            Button("Hardcore", WIDTH // 2 - 150, HEIGHT // 2 + 90, 300, 50, GRAY, DARK_GRAY, action="hardcore"),
+            Button("Quit", WIDTH // 2 - 150, HEIGHT // 2 + 160, 300, 50, GRAY, DARK_GRAY, action="quit")
         ]
         exit = False
         while True and not exit:
@@ -333,6 +341,9 @@ def main():
 
                         if action == 'custom':
                             rules,exit = custom_settings_menu()
+
+                        if action == 'hardcore':
+                            rules,exit = hardcore_settings_menu()
 
             
             pygame.display.update()
@@ -425,13 +436,56 @@ def main():
 
             pygame.display.update()
 
+    def hardcore_settings_menu():
+        category_selector = Selector(x=WIDTH//2 - WIDTH//4, y=HEIGHT // 3+150, width=WIDTH//2, height=50, options=["X Starts", "O Starts"])
+            
+        while True:
+            WIN.fill(WHITE)
+            draw_text("Hardcore mode:", FONT, BLACK, WIN, WIDTH // 2, HEIGHT // 4)
+            draw_text("Game finishes once the grid is full", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+50)
+            draw_text("Cells freeze for 1 turn after being played", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+100)
+            #draw_text("X starts!", SMALLFONT, BLACK, WIN, WIDTH // 2, HEIGHT // 3+150)
+            category_selector.draw(WIN)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                category_selector.handle_event(event)
+            # Mostrar botón de confirmación
+            
+            mouse_pos = pygame.mouse.get_pos()
+            click = pygame.mouse.get_pressed()
+            
+            play_button = pygame.Rect(WIDTH // 2 - 75+90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, play_button)
+            draw_text("Play", SMALLFONT, WHITE, WIN, play_button.centerx, play_button.centery)
+            
+            back_button = pygame.Rect(WIDTH // 2 - 75 -90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, back_button)
+            draw_text("Back", SMALLFONT, WHITE, WIN, back_button.centerx, back_button.centery)
+
+            if play_button.collidepoint(mouse_pos) and click[0]:
+                rules = {'xstart':category_selector.selected_option == 'X'  ,'max_turns': -137,'last_moves': 1} # -137 being used as an indicator for Hardcore mode
+                WIN.fill(WHITE)
+                return rules,True   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+            if back_button.collidepoint(mouse_pos) and click[0]:
+                rules = None
+                WIN.fill(WHITE)
+                return rules,False   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
+            
+
+            pygame.display.update()
+
+
 
     def game(rules):
         xstart=rules['xstart']
         max_turns=rules['max_turns']
         last_moves=rules['last_moves']
         run = True
-        
+        hardcore = max_turns == -137
+
         # Inicialización de Grid y Turno
         state00 = State(0, 0)
         state01 = State(0, 1)
@@ -446,10 +500,12 @@ def main():
 
         turn = TurnClass(xstart=xstart)
         moves_log = []
-        progress=((len(moves_log)+1),max_turns)
+        
+        progress=((len(moves_log)+1),max_turns) if not hardcore else '>:3'
         draw_turn(turn,progress)
         pygame.display.update()
-        while run and len(moves_log) < max_turns:
+
+        while run and ((hardcore and (not grid_full(moves_log))) or len(moves_log) < max_turns ) :
             clock.tick(60)
                 
             for event in pygame.event.get():
@@ -463,21 +519,25 @@ def main():
                     col = pos[0] // CELL_SIZE
                     row = (pos[1]-100) // CELL_SIZE
 
-                    if grid[row, col].collapsed is None and grid[row, col].probs[turn.player] < 1 and ([row,col] not in moves_log[len(moves_log)-last_moves:]) and row>=0:
+                    if grid[row, col].collapsed is None and grid[row, col].probs[turn.player] < 1 and ((row,col) not in moves_log[len(moves_log)-last_moves:]) and row>=0:
                         grid[row, col].move(turn)
-                        moves_log.append([row, col])
+                        moves_log.append((row, col))
                         turn.switch()
 
-            if len(moves_log) < max_turns:
+            if ((hardcore and (not grid_full(moves_log))) or len(moves_log) < max_turns ):
                 draw_grid()
                 draw_state(grid)
-                progress=((len(moves_log)+1),max_turns)
+                progress=((len(moves_log)+1),max_turns) if not hardcore else '>:3'
                 draw_turn(turn,progress)
                 pygame.display.update()
             else:
                 break
-        pygame.time.wait(500)
-        print("Wave Function Collapse")
+
+        draw_grid()
+        draw_state(grid)
+        pygame.display.update()
+        pygame.time.wait(1000)
+
         for i in range(3):
             for j in range(3):
                 grid[i, j].collapse()
@@ -492,13 +552,37 @@ def main():
         
         draw_winner(winner)
         pygame.display.update()
-
+        back=False
         # Espera para mostrar el resultado final
-        pygame.time.wait(6000)
-
-        pygame.quit()
+        while not back:
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                    
+            mouse_pos = pygame.mouse.get_pos()
+            click = pygame.mouse.get_pressed()
+            
+            back_button = pygame.Rect(WIDTH // 2 - 50 // 2+150,20,150, 50)
+            #back_button = pygame.Rect(WIDTH // 2 - 75 -90, HEIGHT - 100, 150, 50)
+            pygame.draw.rect(WIN, DARK_GRAY, back_button)
+            draw_text("Back", SMALLFONT, WHITE, WIN, back_button.centerx, back_button.centery)
+            pygame.display.update()
+            if back_button.collidepoint(mouse_pos) and click[0]:
+                back=True   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
         
-    rules = config()
-    game(rules)
+            
+
+
+        #pygame.quit()
+        
+
+    # main flux
+    while True:
+        rules = config()
+        game(rules)
+    
+
 if __name__ == "__main__":
     main()
