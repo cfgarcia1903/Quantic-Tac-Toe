@@ -1,11 +1,12 @@
 import pygame
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import sympy as sp
-import tempfile
 import os
 import sys
+import matplotlib.pyplot as plt
+import tempfile
 
 
 
@@ -136,7 +137,6 @@ def main():
 
     def render_latex_to_image(expression,colors, fontsize=15, dpi=100):
         fig, ax = plt.subplots(figsize=(1, 1), dpi=dpi)
-        x_index=0
         xpos=0
         for ket,col in zip(expression,colors):
             text_obj=ax.text(xpos, 0, f"${ket}$",color=col, fontsize=fontsize, ha='left', va='center')
@@ -148,7 +148,8 @@ def main():
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
             fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0, transparent=True)
             plt.close(fig)
-            return tmpfile.name
+            print(tmpfile.name)
+            return tmpfile.name 
 
     def draw_text(text, font, color, surface, x, y):
         textobj = font.render(text, True, color)
@@ -207,6 +208,7 @@ def main():
                         img = pygame.image.load(img_path)
                         WIN.blit(img, (j * CELL_SIZE + 10, i * CELL_SIZE + 20+100))
                         os.remove(img_path)
+                        
 
 
     # Backend classes and functions:
@@ -507,11 +509,12 @@ def main():
 
         while run and ((hardcore and (not grid_full(moves_log))) or len(moves_log) < max_turns ) :
             clock.tick(60)
-                
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
                     pygame.quit()
+                    sys.exit()
 
                     
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -560,7 +563,7 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                    
+
             mouse_pos = pygame.mouse.get_pos()
             click = pygame.mouse.get_pressed()
             
@@ -572,10 +575,6 @@ def main():
             if back_button.collidepoint(mouse_pos) and click[0]:
                 back=True   # Regresar el valor seleccionado cuando se presiona el botón de confirmación
         
-            
-
-
-        #pygame.quit()
         
 
     # main flux

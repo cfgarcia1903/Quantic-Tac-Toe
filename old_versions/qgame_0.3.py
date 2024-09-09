@@ -199,8 +199,9 @@ def main():
                     if expression:  # Si hay algo que mostrar
                         img_path = render_latex_to_image(expression,colors, fontsize=20)
                         img = pygame.image.load(img_path)
-                        WIN.blit(img, (j * CELL_SIZE + 10, i * CELL_SIZE + 20))
+                        WIN.blit(img, (j * CELL_SIZE + 10, i * CELL_SIZE + 20+100))
                         os.remove(img_path)
+                        
 
 
     # Backend classes and functions:
