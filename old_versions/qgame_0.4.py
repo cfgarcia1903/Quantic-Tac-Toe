@@ -148,7 +148,7 @@ def main():
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
             fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0, transparent=True)
             plt.close(fig)
-            print(tmpfile.name)
+            #print(tmpfile.name)
             return tmpfile.name 
 
     def draw_text(text, font, color, surface, x, y):
